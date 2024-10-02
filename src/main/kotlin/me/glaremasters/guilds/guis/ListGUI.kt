@@ -98,36 +98,30 @@ class ListGUI(private val guilds: Guilds, private val settingsManager: SettingsM
     }
 
     private fun setListItem(guild: Guild, player: Player) {
-        val defaultUrl = settingsManager.getProperty(GuildListSettings.GUILD_LIST_HEAD_DEFAULT_URL)
-        val useDefaultUrl = settingsManager.getProperty(GuildListSettings.USE_DEFAULT_TEXTURE)
+    val item = ItemStack(Material.STONE) // Replace with your desired base item
 
-        val item = if (!useDefaultUrl && guild.guildSkull != null) {
-            guild.guildSkull?.createSkull() ?: GuildSkull(defaultUrl).itemStack
-        } else {
-            GuildSkull(defaultUrl).itemStack
-        }
+    val meta = item.itemMeta
+    var name = settingsManager.getProperty(GuildListSettings.GUILD_LIST_ITEM_NAME)
 
-        val meta = item.itemMeta
-        var name = settingsManager.getProperty(GuildListSettings.GUILD_LIST_ITEM_NAME)
+    name = StringUtils.color(name)
+    name = name.replace("{player}", if (guild.guildMaster != null) guild.guildMaster.name.toString() else "Master")
+    name = name.replace("{guild}", guild.name)
 
-        name = StringUtils.color(name)
-        name = name.replace("{player}", if (guild.guildMaster != null) guild.guildMaster.name.toString() else "Master")
-        name = name.replace("{guild}", guild.name)
+    meta?.setDisplayName(name)
+    meta?.lore = updatedLore(guild, settingsManager.getProperty(GuildListSettings.GUILD_LIST_HEAD_LORE))
 
-        meta?.setDisplayName(name)
-        meta?.lore = updatedLore(guild, settingsManager.getProperty(GuildListSettings.GUILD_LIST_HEAD_LORE))
+    item.itemMeta = meta
 
-        item.itemMeta = meta
+    val guiItem = GuiItem(item)
 
-        val guiItem = GuiItem(item)
-
-        guiItem.setAction { event ->
-            event.isCancelled = true
-            guilds.guiHandler.members.get(guild, player).open(event.whoClicked)
-        }
-
-        items.add(guiItem)
+    guiItem.setAction { event ->
+        event.isCancelled = true
+        guilds.guiHandler.members.get(guild, player).open(event.whoClicked)
     }
+
+    items.add(guiItem)
+}
+
 
     /**
      * Update lore with replacements
